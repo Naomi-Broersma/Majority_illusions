@@ -1,11 +1,19 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 from collections import Counter
+import random
 
 
 # Create a random directed graph using a specified number of nodes.
 def create_random_directed_graph(nodes):
     graph = nx.scale_free_graph(nodes)
+    temp_graph = graph.copy()
+    for node in graph.nodes():
+        neigbours = list(graph.neighbors(node))
+        if not neigbours:
+            temp_graph = graph.copy()
+            temp_graph.add_edge(node, random.randint(0, len(graph.nodes())))
+    graph = temp_graph.copy()
     return graph
 
 # Create all possible ways to colour a graph using two colours
@@ -74,7 +82,7 @@ def check_majority_illusion_node(graph, node, colouring, weak):
 if __name__ == "__main__":
     colour_majority_illusion = True
     while colour_majority_illusion:
-        digraph = create_random_directed_graph(4)
+        digraph = create_random_directed_graph(6)
         colourings = all_colour_options_graph(digraph)
         # For each colouring check which nodes are under majority illusion
         weak_node_illusion = True
