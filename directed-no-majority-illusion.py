@@ -5,7 +5,7 @@ from collections import Counter
 
 # Create a random directed graph using a specified number of nodes.
 def create_random_directed_graph(nodes):
-    graph = nx.gn_graph(nodes)
+    graph = nx.scale_free_graph(nodes)
     return graph
 
 # Create all possible ways to colour a graph using two colours
@@ -26,75 +26,90 @@ def all_colour_options_graph(graph):
             temp_colours.append(red_temp)
         # Update the colour lists so far using the temporary list
         colours = temp_colours
-
-    print(colours)
-    # Plot the graph using the first colour list
-    nx.draw(graph, node_color=colours[0])
-    plt.show()
     return colours
 
-# Returns the most frequent occurence or a tie. Only works for 2 different results.
+# Returns the most frequent occurence or a tie. Only works for 2 different elements in the list.
 def most_frequent(majority_list):
+    # Create a counter over the given list
     occurence_count = Counter(majority_list)
-    print(occurence_count)
-    most_common_elem_count = occurence_count.most_common(2)[0]
-    second_most_common_elem_count = occurence_count.most_common(2)[1]
-    if most_common_elem_count[1] == second_most_common_elem_count[1]:
-        print("tie")
-        result = "tie"
+    most_common_elem_count = occurence_count.most_common(1)[0]
+    # If there are multiple elements, compare the counter of the two elements
+    if len(occurence_count.most_common()) > 1:
+        second_most_common_elem_count = occurence_count.most_common(2)[1]
+        # Check if there is a tie
+        if most_common_elem_count[1] == second_most_common_elem_count[1]:
+            result = "tie"
+        else: # The first element in the counter is the most common
+            result = most_common_elem_count[0]
     else:
         result = most_common_elem_count[0]
     return result
 
-def check_majority_illusion_node(graph, node, colouring):
-    illusion = False
+# Check for a given node, graph and colouring whether there is a majority illusion for that node.
+# Boolean weak is used to determine what should happen in cases with ties in the local or global opinion.
+def check_majority_illusion_node(graph, node, colouring, weak):
     neigbours = list(graph.neighbors(node))
-    # print(neigbours)
-    # majority_colouring_global = mode(colouring)
-    majority_colouring_global, count = Counter(colouring).most_common(1)[0]
-    # TODO what if the majority is a tie?
-    if len(majority_colouring_global) == 2:
-        majority_colouring_global = "tie"
-    print(majority_colouring_global)
+    # Determine the global opinion
+    majority_colouring_global = most_frequent(colouring)
     colours_neighbours = []
     for neighbour in neigbours:
         colours_neighbours.append(colouring[neighbour])
-    # print(colours_neighbours)
     if colours_neighbours:
-        # Find most frequent colour.
-        majority_colour_neighbours, count = Counter(colours_neighbours).most_common(1)[0]
-        # TODO what if the majority is a tie?
-        if len(majority_colour_neighbours) == 2:
-            majority_colour_neighbours = "tie"
-        # majority_colour_neighbours = mode(colours_neighbours)
+        # Determine the local opinion
+        majority_colour_neighbours = most_frequent(colours_neighbours)
     else:
         # TODO what if there are no neighbours, currently return false
         return False
-    print(majority_colour_neighbours)
+    # If you require a strict majority illusion, then there is no illusion if either globally or locally there is a tie
+    if not weak and (majority_colour_neighbours == "tie" or majority_colouring_global == "tie"):
+        illusion = False
+        return illusion
+    # If the global and local majority is the same, there is no majority illusion for this node
     if majority_colouring_global == majority_colour_neighbours:
         illusion = False
     else:
         illusion = True
-    print(illusion)
     return illusion
 
 if __name__ == "__main__":
-    most_frequent([])
-    digraph = create_random_directed_graph(4)
-    colourings = all_colour_options_graph(digraph)
-    # For each colouring check which nodes are under majority illusion
-    # for col in colourings:
-    #     majority_illusion_colouring = []
-    #     for agent in digraph.nodes():
-    #         majority_illusion_node = check_majority_illusion_node(digraph, agent, col)
-    #         majority_illusion_colouring.append(majority_illusion_node)
-    #     print(majority_illusion_colouring)
-    #     majority_majority_illusion = mode(majority_illusion_colouring)
-    #     majority_majority_illusion = max(set(majority_illusion_colouring), key=majority_illusion_colouring.count)
-    #     # TODO what if the majority is a tie?
-    #     # if len(majority_majority_illusion) == 2:
-    #     #    majority_colouring_global = "tie"
-    #     print(majority_majority_illusion)
+    colour_majority_illusion = True
+    while colour_majority_illusion:
+        digraph = create_random_directed_graph(4)
+        colourings = all_colour_options_graph(digraph)
+        # For each colouring check which nodes are under majority illusion
+        weak_node_illusion = True
+        weak_global_illusion = False
+        for col in colourings:
+            print(col)
+            majority_illusion_colouring = []
+            for agent in digraph.nodes():
+                majority_illusion_node = check_majority_illusion_node(digraph, agent, col, weak_node_illusion)
+                majority_illusion_colouring.append(majority_illusion_node)
+            majority_majority_illusion = most_frequent(majority_illusion_colouring)
+            if majority_majority_illusion == "tie":
+                if weak_global_illusion:
+                    print("There is a majority-(weak)-majority illusion")
+                    colour_majority_illusion = True
+                else:
+                    print("There is NO majority-(weak)-majority illusion")
+            else:
+                if majority_majority_illusion:
+                    print("There is a majority-(weak)-majority illusion")
+                    colour_majority_illusion = True
+                else:
+                    print("There is NO majority-(weak)-majority illusion")
+
+        print(colour_majority_illusion)
+        if colour_majority_illusion:
+            print("For this graph, there exists some colouring that leads to a majority-weak-majority illusion")
+        else:
+            print("For this graph, there DOES NOT exist a colouring that leads to a majority-weak-majority illusion")
+            print(digraph.nodes)
+            print(digraph.edges)
+            # Plot the graph using the first colour list
+            nx.draw(digraph, node_color=colourings[0])
+            plt.show()
+
 
 
 
