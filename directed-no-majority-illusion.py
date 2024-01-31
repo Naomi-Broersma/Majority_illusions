@@ -6,14 +6,39 @@ import random
 
 # Create a random directed graph using a specified number of nodes.
 def create_random_directed_graph(nodes):
-    graph = nx.scale_free_graph(nodes)
+    # graph = nx.scale_free_graph(nodes)
+    graph = nx.random_k_out_graph(nodes, 4, alpha=0.5, self_loops=False)
     temp_graph = graph.copy()
     for node in graph.nodes():
-        neigbours = list(graph.neighbors(node))
-        if not neigbours:
+        neighbours = list(graph.neighbors(node))
+        temp_graph = graph.copy()
+        # Make sure the digraph does not contain multiple edges between 2 nodes
+        for neighbour in neighbours:
+            counter = 0
+            for edge in temp_graph.edges(): # Loop over the edges
+                if edge == (node, neighbour): # Count how many times the current (node,neighbour) edge appears
+                    counter = counter + 1
+            while counter > 1: # While there is more than 1 of the same (node, neighbour) edge, remove the edge
+                temp_graph.remove_edges_from([(node, neighbour)])
+                counter = counter - 1
+        if node in neighbours: # Remove self-loops
+            temp_graph.remove_edges_from([(node, node)])
+            neighbours.remove(node)
+        graph = temp_graph.copy()
+        if not neighbours: # Ensure every node has a neighbour
             temp_graph = graph.copy()
-            temp_graph.add_edge(node, random.randint(0, len(graph.nodes())))
+            random_node = random.randint(0, len(graph.nodes()))
+            if random_node != node:
+                print(random_node)
+                print(node)
+                temp_graph.add_edge(node, random_node)
+            else:
+                print("same")
+                print(random_node)
+                print(node)
     graph = temp_graph.copy()
+    # nx.draw(graph)
+    # plt.show()
     return graph
 
 # Create all possible ways to colour a graph using two colours
@@ -87,25 +112,29 @@ if __name__ == "__main__":
         # For each colouring check which nodes are under majority illusion
         weak_node_illusion = True
         weak_global_illusion = False
+        found = False
         for col in colourings:
-            print(col)
-            majority_illusion_colouring = []
-            for agent in digraph.nodes():
-                majority_illusion_node = check_majority_illusion_node(digraph, agent, col, weak_node_illusion)
-                majority_illusion_colouring.append(majority_illusion_node)
-            majority_majority_illusion = most_frequent(majority_illusion_colouring)
-            if majority_majority_illusion == "tie":
-                if weak_global_illusion:
-                    print("There is a majority-(weak)-majority illusion")
-                    colour_majority_illusion = True
+            if not found:
+                print(col)
+                majority_illusion_colouring = []
+                for agent in digraph.nodes():
+                    majority_illusion_node = check_majority_illusion_node(digraph, agent, col, weak_node_illusion)
+                    majority_illusion_colouring.append(majority_illusion_node)
+                majority_majority_illusion = most_frequent(majority_illusion_colouring)
+                if majority_majority_illusion == "tie":
+                    if weak_global_illusion:
+                        print("There is a majority-(weak)-majority illusion")
+                        colour_majority_illusion = True
+                        found = True
+                    else:
+                        print("There is NO majority-(weak)-majority illusion")
                 else:
-                    print("There is NO majority-(weak)-majority illusion")
-            else:
-                if majority_majority_illusion:
-                    print("There is a majority-(weak)-majority illusion")
-                    colour_majority_illusion = True
-                else:
-                    print("There is NO majority-(weak)-majority illusion")
+                    if majority_majority_illusion:
+                        print("There is a majority-(weak)-majority illusion")
+                        colour_majority_illusion = True
+                        found = True
+                    else:
+                        print("There is NO majority-(weak)-majority illusion")
 
         print(colour_majority_illusion)
         if colour_majority_illusion:
