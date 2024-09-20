@@ -158,14 +158,14 @@ def plot_graph(graph, colour_map):
 if __name__ == "__main__":
     weak_node_illusion = True
     weak_global_illusion = False
-    cycle = create_3_cycle()
-    general_graph_check(cycle, weak_node_illusion, weak_global_illusion)
+    # cycle = create_3_cycle()
+    # general_graph_check(cycle, weak_node_illusion, weak_global_illusion)
 
-    # # Keeps checking generated graphs until one has been found without a majority-weak-majority illusion.
-    # graph_majority_illusion = True
-    # while graph_majority_illusion:
-    #     digraph = create_random_directed_graph(7)
-    #     graph_majority_illusion = general_graph_check(digraph, weak_node_illusion, weak_global_illusion)
+    # Keeps checking generated graphs until one has been found without a majority-weak-majority illusion.
+    graph_majority_illusion = True
+    while graph_majority_illusion:
+        digraph = create_random_directed_graph(7)
+        graph_majority_illusion = general_graph_check(digraph, weak_node_illusion, weak_global_illusion)
 
 
 
