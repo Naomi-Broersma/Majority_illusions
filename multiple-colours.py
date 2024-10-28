@@ -51,7 +51,7 @@ def all_colour_options_graph(graph):
                 temp_colours.append(temp_colour_list)
         # Update the colour lists so far using the temporary list
         colour_list = temp_colours
-        print(temp_colours)
+        # print(temp_colours)
     return colour_list
 
 
@@ -70,7 +70,63 @@ def plot_graph(graph, colour_map):
     plt.show()
     return
 
+
+# Returns the most frequently occurring colour or multiple colours.
+# TODO change this, so it works for multiple colours.
+def most_frequent(majority_list):
+    # Create a counter over the given list
+    occurrence_count = Counter(majority_list)
+    most_common_elem_count = occurrence_count.most_common(1)[0]
+    frequency_most_frequent = most_common_elem_count[1]
+    print(occurrence_count)
+    print(most_common_elem_count)
+    # If there are multiple colours, compare the counter of the colours
+    if len(occurrence_count) > 1:
+        amount_of_colours = len(occurrence_count)
+        # For each of the colours, add it to the list of most frequent colours if its frequency of appearing is the
+        # same as the most frequently occurring colour.
+        for colour in range(amount_of_colours):
+            print(colour)
+            colour_occurrence = occurrence_count.most_common()[colour][1]
+            print("colour_occurrence")
+            print(colour_occurrence)
+            if colour_occurrence == frequency_most_frequent:
+                list_frequent_colours.append(colour)
+        print(list_frequent_colours)
+    return list_frequent_colours
+
+
 # TODO determine if plurality illusion
+# Check for a given node, graph and colouring whether there is a plurality illusion for that node.
+# Boolean weak is used to determine what should happen in cases with ties in the local or global opinion.
+def check_plurality_illusion_node(graph, node, colouring, weak):
+    neigbours = list(graph.neighbors(node))
+    # Determine the global opinion
+    plurality_winner_global = most_frequent(colouring)
+    colours_neighbours = []
+    for neighbour in neigbours:
+        colours_neighbours.append(colouring[neighbour])
+    if colours_neighbours:
+        # Determine the local plurality winner
+        plurality_winner_neighbours = most_frequent(colours_neighbours)
+        print(plurality_winner_neighbours)
+    else:
+        # TODO what if there are no neighbours, currently return false
+        return False
+
+    # TODO change this part (still for majority case)
+    # # If you require a strict majority illusion, then there is no illusion if either globally or locally there is a tie
+    # if not weak and (majority_colour_neighbours == "tie" or majority_colouring_global == "tie"):
+    #     illusion = False
+    #     return illusion
+    # # If the global and local majority is the same, there is no majority illusion for this node
+    # if majority_colouring_global == majority_colour_neighbours:
+    #     illusion = False
+    # else:
+    #     illusion = True
+    # return illusion
+    return
+
 
 # TODO determine if quota illusion
 
@@ -83,5 +139,7 @@ if __name__ == "__main__":
     colour_options = all_colour_options_graph(digraph)
     # for colours in colour_options:
     #     plot_graph(digraph, colours)
-
+    for node in digraph.nodes():
+        print("NEW node")
+        check_plurality_illusion_node(digraph, node, colour_options[3], False)
 
