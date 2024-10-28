@@ -79,20 +79,20 @@ def most_frequent(majority_list):
     most_common_elem_count = occurrence_count.most_common(1)[0]
     frequency_most_frequent = most_common_elem_count[1]
     print(occurrence_count)
-    print(most_common_elem_count)
     # If there are multiple colours, compare the counter of the colours
+    list_frequent_colours = []
     if len(occurrence_count) > 1:
         amount_of_colours = len(occurrence_count)
         # For each of the colours, add it to the list of most frequent colours if its frequency of appearing is the
         # same as the most frequently occurring colour.
         for colour in range(amount_of_colours):
-            print(colour)
             colour_occurrence = occurrence_count.most_common()[colour][1]
-            print("colour_occurrence")
-            print(colour_occurrence)
             if colour_occurrence == frequency_most_frequent:
-                list_frequent_colours.append(colour)
+                list_frequent_colours.append(occurrence_count.most_common()[colour][0])
+        print("frequent colours")
         print(list_frequent_colours)
+    else:
+        list_frequent_colours = occurrence_count.most_common(1)[0][0]
     return list_frequent_colours
 
 
