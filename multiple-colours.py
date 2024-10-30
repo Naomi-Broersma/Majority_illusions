@@ -14,18 +14,18 @@ def create_random_directed_graph(nodes):
         # Make sure the digraph does not contain multiple edges between 2 nodes
         for neighbour in neighbours:
             counter = 0
-            for edge in temp_graph.edges(): # Loop over the edges
-                if edge == (node, neighbour): # Count how many times the current (node,neighbour) edge appears
+            for edge in temp_graph.edges():  # Loop over the edges
+                if edge == (node, neighbour):  # Count how many times the current (node,neighbour) edge appears
                     counter = counter + 1
-            while counter > 1: # While there is more than 1 of the same (node, neighbour) edge, remove the edge
+            while counter > 1:  # While there is more than 1 of the same (node, neighbour) edge, remove the edge
                 temp_graph.remove_edges_from([(node, neighbour)])
                 counter = counter - 1
-        if node in neighbours: # Remove self-loops
+        if node in neighbours:  # Remove self-loops
             temp_graph.remove_edges_from([(node, node)])
             neighbours.remove(node)
         graph = temp_graph.copy()
         # TODO remove this?
-        if not neighbours: # Ensure every node has a neighbour
+        if not neighbours:  # Ensure every node has a neighbour
             temp_graph = graph.copy()
             random_node = random.randint(0, len(graph.nodes()))
             if random_node != node:
@@ -57,7 +57,7 @@ def all_colour_options_graph(graph):
 
 # Change the position of node labels in the plot
 def nudge(pos, x_shift, y_shift):
-    return {n:(x + x_shift, y + y_shift) for n,(x,y) in pos.items()}
+    return {n: (x + x_shift, y + y_shift) for n, (x, y) in pos.items()}
 
 
 # Plot the graph
@@ -72,13 +72,11 @@ def plot_graph(graph, colour_map):
 
 
 # Returns the most frequently occurring colour or multiple colours.
-# TODO change this, so it works for multiple colours.
-def most_frequent(majority_list):
+def most_frequent(agent_colours):
     # Create a counter over the given list
-    occurrence_count = Counter(majority_list)
+    occurrence_count = Counter(agent_colours)
     most_common_elem_count = occurrence_count.most_common(1)[0]
     frequency_most_frequent = most_common_elem_count[1]
-    print(occurrence_count)
     # If there are multiple colours, compare the counter of the colours
     list_frequent_colours = []
     if len(occurrence_count) > 1:
@@ -89,57 +87,97 @@ def most_frequent(majority_list):
             colour_occurrence = occurrence_count.most_common()[colour][1]
             if colour_occurrence == frequency_most_frequent:
                 list_frequent_colours.append(occurrence_count.most_common()[colour][0])
-        print("frequent colours")
-        print(list_frequent_colours)
     else:
-        list_frequent_colours = occurrence_count.most_common(1)[0][0]
+        list_frequent_colours = [occurrence_count.most_common(1)[0][0]]
     return list_frequent_colours
 
 
-# TODO determine if plurality illusion
 # Check for a given node, graph and colouring whether there is a plurality illusion for that node.
-# Boolean weak is used to determine what should happen in cases with ties in the local or global opinion.
-def check_plurality_illusion_node(graph, node, colouring, weak):
-    neigbours = list(graph.neighbors(node))
+def check_plurality_illusion_node(graph, node, colouring):
     # Determine the global opinion
     plurality_winner_global = most_frequent(colouring)
+    neighbours = list(graph.neighbors(node))
     colours_neighbours = []
-    for neighbour in neigbours:
+    for neighbour in neighbours:
         colours_neighbours.append(colouring[neighbour])
     if colours_neighbours:
         # Determine the local plurality winner
         plurality_winner_neighbours = most_frequent(colours_neighbours)
-        print(plurality_winner_neighbours)
     else:
-        # TODO what if there are no neighbours, currently return false
-        return False
+        plurality_winner_neighbours = []
+    # print(plurality_winner_neighbours)
+    # print(plurality_winner_global)
+    # TODO double-check if this works for empty set of local winners.
+    # If you require a strict plurality illusion, then there is no overlap between local and global plurality winners.
+    plurality_illusion = True
+    for winner in plurality_winner_neighbours:
+        if winner in plurality_winner_global:
+            plurality_illusion = False
+            break
+    # If you require a weak plurality illusion, then the local and global plurality winners cannot be exactly the same.
+    weak_plurality_illusion = True
+    if sorted(plurality_winner_global) == sorted(plurality_winner_neighbours):
+        weak_plurality_illusion = False
+    return plurality_illusion, weak_plurality_illusion
 
-    # TODO change this part (still for majority case)
-    # # If you require a strict majority illusion, then there is no illusion if either globally or locally there is a tie
-    # if not weak and (majority_colour_neighbours == "tie" or majority_colouring_global == "tie"):
-    #     illusion = False
-    #     return illusion
-    # # If the global and local majority is the same, there is no majority illusion for this node
-    # if majority_colouring_global == majority_colour_neighbours:
-    #     illusion = False
-    # else:
-    #     illusion = True
-    # return illusion
-    return
+
+# Determine which colours appear more than a quota-fraction.
+def determine_quota_winner(agent_colours, quota):
+    quota_winner = []
+    occurrence_count = Counter(agent_colours)
+    # Loop over all colours and their counters.
+    for item in occurrence_count.most_common():
+        # Determine the fraction of agents that has this colour and if more than the quota, add the colour as a quota
+        # winner.
+        fraction = item[1] / len(agent_colours)
+        if fraction > quota:
+            quota_winner.append(item[0])
+    return quota_winner
 
 
-# TODO determine if quota illusion
+# Check for a given node, graph and colouring whether there is a quota illusion for that node.
+def check_quota_illusion_node(graph, node, colouring, quota):
+    # Determine the global quota winners.
+    quota_winner_global = determine_quota_winner(colouring, quota)
+    # Determine the neighbours of the node and which colour is the local quota winner.
+    neighbours = list(graph.neighbors(node))
+    colours_neighbours = []
+    for neighbour in neighbours:
+        colours_neighbours.append(colouring[neighbour])
+    if colours_neighbours:
+        # Determine the local quota winners.
+        quota_winner_neighbours = determine_quota_winner(colours_neighbours, quota)
+    else:
+        quota_winner_neighbours = []
+
+    # If you require a strict quota illusion, then there is no overlap between local and global quota winners and the
+    # local quota winner and global winner cannot be empty sets.
+    quota_illusion = True
+    if not quota_winner_neighbours or not quota_winner_global:
+        quota_illusion = False
+    else:
+        for winner in quota_winner_neighbours:
+            if winner in quota_winner_global:
+                quota_illusion = False
+                break
+    # If you require a weak quota illusion, then the local and global quota winners cannot be exactly the same.
+    weak_quota_illusion = True
+    if sorted(quota_winner_global) == sorted(quota_winner_neighbours):
+        weak_quota_illusion = False
+    return quota_illusion, weak_quota_illusion
+
 
 # TODO loop through the different colourings and call the illusion functions for each colouring
 
 
-# TODO create main function that calls other functions
 if __name__ == "__main__":
     digraph = create_random_directed_graph(7)
     colour_options = all_colour_options_graph(digraph)
     # for colours in colour_options:
     #     plot_graph(digraph, colours)
-    for node in digraph.nodes():
+    for agent in digraph.nodes():
         print("NEW node")
-        check_plurality_illusion_node(digraph, node, colour_options[3], False)
-
+        plurality_ill, weak_plurality_ill = check_plurality_illusion_node(digraph, agent, colour_options[3])
+        print(plurality_ill, weak_plurality_ill)
+        quota_ill, weak_quota_ill = check_quota_illusion_node(digraph, agent, colour_options[3], 0.5)
+        print(quota_ill, weak_quota_ill)
