@@ -167,17 +167,120 @@ def check_quota_illusion_node(graph, node, colouring, quota):
     return quota_illusion, weak_quota_illusion
 
 
-# TODO loop through the different colourings and call the illusion functions for each colouring
+# Check for a graph whether there is a (weak)-1/k-(weak)-quota illusion.
+def quota_illusion_graph(graph, graph_colouring, quota, k):
+    quota_illusion_counter = 0
+    weak_quota_illusion_counter = 0
+    # Loop over the nodes and count the number of nodes under (weak-)quota illusion.
+    for node in graph.nodes():
+        quota_illusion_node, weak_quota_illusion_node = check_quota_illusion_node(graph, node, graph_colouring, quota)
+        if quota_illusion_node:
+            quota_illusion_counter = quota_illusion_counter + 1
+        if weak_quota_illusion_node:
+            weak_quota_illusion_counter = weak_quota_illusion_counter + 1
+    # Determine the fraction of nodes that are under (weak)-quota illusion.
+    quota_illusion_fraction = quota_illusion_counter / len(graph.nodes())
+    weak_quota_illusion_fraction = weak_quota_illusion_counter / len(graph.nodes())
+    k_fraction_quota_illusion = False
+    weak_k_fraction_quota_illusion = False
+    k_fraction_weak_quota_illusion = False
+    weak_k_fraction_weak_quota_illusion = False
+    # Check all instances where there is a (weak)-1/k-weak-quota illusion.
+    if quota_illusion_fraction > 1 / k:
+        k_fraction_quota_illusion = True
+        weak_k_fraction_quota_illusion = True
+    if quota_illusion_fraction == 1 / k:
+        weak_k_fraction_quota_illusion = True
+    if weak_quota_illusion_fraction > 1 / k:
+        k_fraction_weak_quota_illusion = True
+        weak_k_fraction_weak_quota_illusion = True
+    if weak_quota_illusion_fraction == 1 / k:
+        weak_k_fraction_weak_quota_illusion = True
+    return k_fraction_quota_illusion, k_fraction_weak_quota_illusion, weak_k_fraction_quota_illusion, weak_k_fraction_weak_quota_illusion
+
+
+# Check for a graph whether there is a (weak)-1/k-(weak)-plurality illusion.
+def plurality_illusion_graph(graph, graph_colouring, k):
+    plurality_illusion_counter = 0
+    weak_plurality_illusion_counter = 0
+    # Loop over the nodes and count the number of nodes under (weak-)quota illusion.
+    for node in graph.nodes():
+        plurality_illusion_node, weak_plurality_illusion_node = check_plurality_illusion_node(graph, node,
+                                                                                              graph_colouring)
+        if plurality_illusion_node:
+            plurality_illusion_counter = plurality_illusion_counter + 1
+        if weak_plurality_illusion_node:
+            weak_plurality_illusion_counter = weak_plurality_illusion_counter + 1
+    # Determine the fraction of nodes that are under (weak)-quota illusion.
+    plurality_illusion_fraction = plurality_illusion_counter / len(graph.nodes())
+    weak_plurality_illusion_fraction = weak_plurality_illusion_counter / len(graph.nodes())
+    k_fraction_plurality_illusion = False
+    weak_k_fraction_plurality_illusion = False
+    k_fraction_weak_plurality_illusion = False
+    weak_k_fraction_weak_plurality_illusion = False
+    # Check all instances where there is a (weak)-1/k-weak-plurality illusion.
+    if plurality_illusion_fraction > 1 / k:
+        k_fraction_plurality_illusion = True
+        weak_k_fraction_plurality_illusion = True
+    if plurality_illusion_fraction == 1 / k:
+        weak_k_fraction_plurality_illusion = True
+    if weak_plurality_illusion_fraction > 1 / k:
+        k_fraction_weak_plurality_illusion = True
+        weak_k_fraction_weak_plurality_illusion = True
+    if weak_plurality_illusion_fraction == 1 / k:
+        weak_k_fraction_weak_plurality_illusion = True
+    return k_fraction_plurality_illusion, k_fraction_weak_plurality_illusion, weak_k_fraction_plurality_illusion, weak_k_fraction_weak_plurality_illusion
+
+
+# For each possible colouring of the graph, check if there exists a (weak-)1/k-(weak)-quota illusion.
+# Stop if a 1/k-(weak)-quota illusion has been found.
+def quota_illusion_check_per_colouring(graph, graph_colourings, quota, k):
+    k_fraction_weak_quota = False
+    time = 0
+    for colouring in graph_colourings:
+        print(time, "/", len(graph_colourings))
+        (k_fraction_quota_illusion, k_fraction_weak_quota_illusion, weak_k_fraction_quota_illusion,
+         weak_k_fraction_weak_quota_illusion) = quota_illusion_graph(graph, colouring, quota, k)
+        if k_fraction_weak_quota_illusion:
+            k_fraction_weak_quota = True
+            break
+        time = time + 1
+    if k_fraction_weak_quota:
+        print("A 1/k-weak-quota illusion has been found.")
+        plot_graph(graph, graph_colourings[time])
+    else:
+        print("There does not exist a 1/k-weak-quota illusion for any of the possible colourings of the graph.")
+        plot_graph(graph, graph_colourings[0])
+    return
+
+
+# For each possible colouring of the graph, check if there exists a (weak-)1/k-(weak)-plurality illusion.
+# Stop if a 1/k-(weak)-plurality illusion has been found.
+def plurality_illusion_check_per_colouring(graph, graph_colourings, k):
+    k_fraction_weak_plurality = False
+    time = 0
+    for colouring in graph_colourings:
+        print(time, "/", len(graph_colourings))
+        (k_fraction_plurality_illusion, k_fraction_weak_plurality_illusion, weak_k_fraction_plurality_illusion,
+         weak_k_fraction_weak_plurality_illusion) = plurality_illusion_graph(graph, colouring, k)
+        if k_fraction_weak_plurality_illusion:
+            k_fraction_weak_plurality = True
+            break
+        time = time + 1
+    if k_fraction_weak_plurality:
+        print("A 1/k-weak-plurality illusion has been found.")
+        plot_graph(graph, graph_colourings[time])
+    else:
+        print("There does not exist a 1/k-weak-plurality illusion for any of the possible colourings of the graph.")
+        plot_graph(graph, graph_colourings[0])
+    return
 
 
 if __name__ == "__main__":
     digraph = create_random_directed_graph(7)
     colour_options = all_colour_options_graph(digraph)
-    # for colours in colour_options:
-    #     plot_graph(digraph, colours)
-    for agent in digraph.nodes():
-        print("NEW node")
-        plurality_ill, weak_plurality_ill = check_plurality_illusion_node(digraph, agent, colour_options[3])
-        print(plurality_ill, weak_plurality_ill)
-        quota_ill, weak_quota_ill = check_quota_illusion_node(digraph, agent, colour_options[3], 0.5)
-        print(quota_ill, weak_quota_ill)
+    print("Checking for quota illusions.")
+    quota_illusion_check_per_colouring(digraph, colour_options, 0.5, 0.25)
+    print("Checking for plurality illusions.")
+    plurality_illusion_check_per_colouring(digraph, colour_options, 1/4)
+
