@@ -273,18 +273,25 @@ def plurality_illusion_check_per_colouring(graph, graph_colourings, k):
         time = time + 1
     if k_fraction_weak_plurality:
         print("A 1/k-weak-plurality illusion has been found.")
-        plot_graph(graph, graph_colourings[time])
+        # plot_graph(graph, graph_colourings[time])
     else:
         print("There does not exist a 1/k-weak-plurality illusion for any of the possible colourings of the graph.")
-        plot_graph(graph, graph_colourings[0])
-    return
+        # plot_graph(graph, graph_colourings[0])
+    return k_fraction_weak_plurality
 
 
 if __name__ == "__main__":
-    digraph = create_random_directed_graph(10)
-    colour_options = all_colour_options_graph(digraph)
-    print("Checking for quota illusions.")
-    quota_illusion_check_per_colouring(digraph, colour_options, 0.5, 0.25)
-    print("Checking for plurality illusions.")
-    plurality_illusion_check_per_colouring(digraph, colour_options, 1/4)
+    check_plurality = True
+    while check_plurality:
+        digraph = create_random_directed_graph(10)
+        colour_options = all_colour_options_graph(digraph)
+        # print("Checking for quota illusions.")
+        # quota_illusion_check_per_colouring(digraph, colour_options, 0.5, 4)
+        print("Checking for plurality illusions.")
+        k_fraction_weak_plur = plurality_illusion_check_per_colouring(digraph, colour_options, 4)
+        if not k_fraction_weak_plur:
+            check_plurality = False
+            plot_graph(digraph, colour_options[0])
+            print(digraph.nodes())
+            print(digraph.edges())
 
