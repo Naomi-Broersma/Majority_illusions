@@ -87,9 +87,8 @@ def check_majority_illusion_node(graph, node, colouring, weak):
     if colours_neighbours:
         # Determine the local opinion
         majority_colour_neighbours = most_frequent(colours_neighbours)
-    else:
-        # TODO what if there are no neighbours, currently return false
-        return False
+    else: # If there are no neighbours, the agent sees a tie.
+        majority_colour_neighbours = "tie"
     # If you require a strict majority illusion, then there is no illusion if either globally or locally there is a tie
     if not weak and (majority_colour_neighbours == "tie" or majority_colouring_global == "tie"):
         illusion = False

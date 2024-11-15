@@ -83,9 +83,8 @@ def check_majority_illusion_node(graph, node, colouring):
     if colours_neighbours:
         # Determine the local opinion
         majority_colour_neighbours = most_frequent(colours_neighbours)
-    else:
-        # TODO what if there are no neighbours, currently return false
-        return False
+    else:  # If there are no neighbours, the agent sees a tie.
+        majority_colour_neighbours = "tie"
     # The node is not under majority illusion if either globally or locally there is a tie
     if majority_colour_neighbours == "tie" or majority_colouring_global == "tie":
         illusion = False
@@ -98,7 +97,7 @@ def check_majority_illusion_node(graph, node, colouring):
     return illusion
 
 
-# TODO determine if there is a majority-majority illusion for some colouring
+# Determine if there is a majority-majority illusion for some colouring
 def check_majority_majority_illusion_graph(graph, colouring):
     list_maj_ill_node = []
     for agent in graph.nodes():
@@ -109,7 +108,28 @@ def check_majority_majority_illusion_graph(graph, colouring):
         majority_majority_illusion = False
     return majority_majority_illusion
 
-# TODO update step using a majority threshold
+
+# Update step using a majority threshold. The colours of the nodes will be changed to the local majority winner.
+def majority_threshold_update(graph, colouring):
+    new_colouring = []
+    for agent in graph.nodes():
+        neighbours = list(graph.neighbors(agent))
+        colours_neighbours = []
+        for neighbour in neighbours:
+            colours_neighbours.append(colouring[neighbour])
+        # Determine the local majority winner among the neighbours if there are neighbours.
+        if colours_neighbours:
+            majority_colour_neighbours = most_frequent(colours_neighbours)
+        else:  # If there are no neighbours, the agents sees a tie.
+            majority_colour_neighbours = "tie"
+        if majority_colour_neighbours == "tie":  # The colour of the node remains the same.
+            new_colouring.append(colouring[agent])
+        else:  # The colour of the node will be changed to the local majority winner.
+            new_colouring.append(majority_colour_neighbours)
+    print("Old vs. new colouring:")
+    print(colouring)
+    print(new_colouring)
+    return new_colouring
 
 
 # Change the position of node labels in the plot
@@ -140,9 +160,12 @@ if __name__ == "__main__":
         colour_options = all_colour_options_graph(digraph)
         # Check until a colouring with majority-majority illusion has been found
         for colouring_graph in colour_options:
-            maj_maj_ill = check_majority_majority_illusion_graph(digraph, colouring_graph)
-
-        # For that colouring do a majority threshold update step Check if the new graph has certain properties:
+            maj_maj_illusion = check_majority_majority_illusion_graph(digraph, colouring_graph)
+            # For that colouring do a majority threshold update step
+            # if maj_maj_illusion:
+            new_colouring = majority_threshold_update(digraph, colouring_graph)
+            print(maj_maj_illusion)
+        # Check if the new graph has certain properties:
         # majority-majority illusion, what colour is global majority winner etc. How often do these properties occur
         # among colourings that are a majority-majority illusion?
     plot_graph(digraph, colour_options[0])
