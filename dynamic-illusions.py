@@ -3,7 +3,6 @@ from collections import Counter
 import networkx as nx
 from matplotlib import pyplot as plt
 
-
 # Create a random directed graph using a specified number of nodes.
 def create_random_directed_graph(nodes):
     # graph = nx.scale_free_graph(nodes)
@@ -111,7 +110,7 @@ def check_majority_majority_illusion_graph(graph, colouring):
 
 # Update step using a majority threshold. The colours of the nodes will be changed to the local majority winner.
 def majority_threshold_update(graph, colouring):
-    new_colouring = []
+    new_colouring_graph = []
     for agent in graph.nodes():
         neighbours = list(graph.neighbors(agent))
         colours_neighbours = []
@@ -123,13 +122,13 @@ def majority_threshold_update(graph, colouring):
         else:  # If there are no neighbours, the agents sees a tie.
             majority_colour_neighbours = "tie"
         if majority_colour_neighbours == "tie":  # The colour of the node remains the same.
-            new_colouring.append(colouring[agent])
+            new_colouring_graph.append(colouring[agent])
         else:  # The colour of the node will be changed to the local majority winner.
-            new_colouring.append(majority_colour_neighbours)
+            new_colouring_graph.append(majority_colour_neighbours)
     print("Old vs. new colouring:")
     print(colouring)
-    print(new_colouring)
-    return new_colouring
+    print(new_colouring_graph)
+    return new_colouring_graph
 
 
 # Change the position of node labels in the plot
@@ -150,24 +149,27 @@ def plot_graph(graph, colour_map):
 
 # TODO generate a graph with a majority-majority illusion, instead of a random one and then checking for
 #  majority-majority illusion.
+# Potential approaches:
+# - proposition 8 defines n and d for which it is possible to have maj-maj illusion for d-regular undirected graph.
+# - theorem 2: for at least one such graph there is a maj-maj illusion, but not necessarily all of them.
 if __name__ == "__main__":
     maj_maj_illusion = False
-    digraph = nx.empty_graph
+    graph = nx.empty_graph
     colour_options = []
     while not maj_maj_illusion:
-        # Create a graph (both digraph and undirected graph)
-        digraph = create_random_directed_graph(10)
-        colour_options = all_colour_options_graph(digraph)
+        # Create a random regular graph with 10 nodes and 3 neighbours for each node.
+        graph = nx.random_regular_graph(3,14)
+        colour_options = all_colour_options_graph(graph)
         # Check until a colouring with majority-majority illusion has been found
         for colouring_graph in colour_options:
-            maj_maj_illusion = check_majority_majority_illusion_graph(digraph, colouring_graph)
+            maj_maj_illusion = check_majority_majority_illusion_graph(graph, colouring_graph)
             # For that colouring do a majority threshold update step
             # if maj_maj_illusion:
-            new_colouring = majority_threshold_update(digraph, colouring_graph)
+            new_colouring = majority_threshold_update(graph, colouring_graph)
             print(maj_maj_illusion)
         # Check if the new graph has certain properties:
         # majority-majority illusion, what colour is global majority winner etc. How often do these properties occur
         # among colourings that are a majority-majority illusion?
-    plot_graph(digraph, colour_options[0])
-    print(digraph.nodes())
-    print(digraph.edges())
+    plot_graph(graph, colour_options[0])
+    print(graph.nodes())
+    print(graph.edges())
