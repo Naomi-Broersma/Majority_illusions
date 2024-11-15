@@ -283,7 +283,7 @@ def plurality_illusion_check_per_colouring(graph, graph_colourings, k):
 if __name__ == "__main__":
     check_plurality = True
     while check_plurality:
-        digraph = create_random_directed_graph(10)
+        digraph = create_random_directed_graph(7)
         colour_options = all_colour_options_graph(digraph)
         # print("Checking for quota illusions.")
         # quota_illusion_check_per_colouring(digraph, colour_options, 0.5, 4)
@@ -294,4 +294,3 @@ if __name__ == "__main__":
             plot_graph(digraph, colour_options[0])
             print(digraph.nodes())
             print(digraph.edges())
-
