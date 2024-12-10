@@ -2,10 +2,28 @@ from collections import Counter
 import networkx as nx
 import numpy as np
 from iteration_utilities import random_combination
+from matplotlib import pyplot as plt
+
 
 # Venema-Los, M., Christoff, Z., & Grossi, D. (2023). On the Graph Theory of Majority Illusions.
 # In V. Malvone & A. Murano (Eds.), Multi-Agent Systems (pp. 17–31). Cham: Springer Nature
 # Switzerland.
+
+
+# Change the position of node labels in the plot
+def nudge(pos, x_shift, y_shift):
+    return {n: (x + x_shift, y + y_shift) for n, (x, y) in pos.items()}
+
+
+# Plot the network in a nice way.
+def plot_graph(graph, colour_map):
+    fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+    pos = nx.spring_layout(graph)
+    nx.draw_networkx(graph, with_labels=False, pos=pos, ax=ax, node_color=colour_map, arrowsize=20)  # default labeling
+    pos_nodes = nudge(pos, 0, 0.1)
+    nx.draw_networkx_labels(graph, pos=pos_nodes, ax=ax, font_size=16)
+    plt.show()
+    return
 
 
 # Initialisation step from algorithm 3 of Venema-Los et al. (2023)
@@ -23,6 +41,7 @@ def initialise_degree_of_regular_subgraph(num_nodes, k):
     else:
         k_blue = k/2 - 2
         k_red = (k - 2)/2
+    print("k_blue", k_blue)
     return k_blue, k_red
 
 
@@ -123,22 +142,37 @@ def create_regular_maj_maj_ill_graph(num_nodes, k):
     num_red_nodes = int(np.floor(num_nodes/2 + 1))
     num_blue_nodes = int(np.ceil(num_nodes/2 - 1))
     k_blue_nodes, k_red_nodes = initialise_degree_of_regular_subgraph(num_nodes, k)
+    print(k_red_nodes, k_blue_nodes)
     regular_graph = nx.Graph()
     regular_graph.add_nodes_from(list(range(1, num_nodes+1)))
     red_nodes = list(random_combination(regular_graph.nodes(), num_red_nodes))
     blue_nodes = list(set(regular_graph.nodes()) - set(red_nodes))
+    print(red_nodes, blue_nodes)
+    colours = []
+    for node_index in range(1, num_nodes + 1):
+        if node_index in red_nodes:
+            colours.append("red")
+        else:
+            colours.append("blue")
+    print(colours)
     regular_graph = add_initial_edges(regular_graph, blue_nodes, red_nodes, k)
+    plot_graph(regular_graph, colours)
     add_extra_blue_edges(regular_graph, blue_nodes, k, k_blue_nodes)
+    plot_graph(regular_graph, colours)
     if k_red_nodes % 2 == 0 or num_red_nodes % 2 == 0:
         regular_graph = add_regular_subgraph(regular_graph, red_nodes, k_red_nodes)
+        plot_graph(regular_graph, colours)
     if k_blue_nodes % 2 == 0 or num_blue_nodes % 2 == 0:
         regular_graph = add_regular_subgraph(regular_graph, blue_nodes, k_blue_nodes)
+        plot_graph(regular_graph, colours)
     if k_red_nodes % 2 == 1 and num_red_nodes % 2 == 1:
         k_red_temp = k_red_nodes - 1
         regular_graph = add_regular_subgraph(regular_graph, red_nodes, k_red_temp)
+        plot_graph(regular_graph, colours)
         if k_blue_nodes > 0:
             k_blue_temp = k_blue_nodes - 1
             regular_graph = add_regular_subgraph(regular_graph, blue_nodes, k_blue_temp)
+            plot_graph(regular_graph, colours)
     ordered_blue_nodes = order_by_number_of_edges(regular_graph, blue_nodes)
     blue_least_edges = ordered_blue_nodes[0]
     red_without_unconnected_red = []
@@ -152,7 +186,9 @@ def create_regular_maj_maj_ill_graph(num_nodes, k):
     blue_without_blue_least_edges.remove(blue_least_edges)
     if k_blue_nodes > 0:
         regular_graph = add_unconnected_less_than_k_edges(regular_graph, blue_without_blue_least_edges, k)
+        plot_graph(regular_graph, colours)
     regular_graph = add_unconnected_less_than_k_edges(regular_graph, red_without_unconnected_red, k)
+    plot_graph(regular_graph, colours)
     return
 
 
