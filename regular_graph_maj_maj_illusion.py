@@ -101,9 +101,11 @@ def add_extra_blue_edges(graph, blue_nodes, degree, degree_blue):
 def add_regular_subgraph(graph, coloured_nodes, colour_degree):
     for index in range(0, len(coloured_nodes)):
         if len(coloured_nodes) % 2 == 0:
-            index_start = index + int(np.floor(len(coloured_nodes)/2) % len(coloured_nodes))
+            index_start = (index + int(np.floor(len(coloured_nodes)/2))) % len(coloured_nodes)
         else:
             index_start = index + len(coloured_nodes) / 2
+        print("here")
+        print(index, index_start)
         if len(coloured_nodes) % 2 == 0 and colour_degree % 2 == 1:
             graph.add_edge(coloured_nodes[index], coloured_nodes[index_start])
         # TODO how does this work when k_colour can be odd, but r needs to be an integer?
@@ -112,9 +114,11 @@ def add_regular_subgraph(graph, coloured_nodes, colour_degree):
         if len(coloured_nodes) % 2 == 1 and colour_degree % 2 == 1:
             r = (colour_degree - 1) / 2
         print(colour_degree, r, int(r))
-        for i in range(1, r+1):
+        for i in range(1, int(np.floor(r))+1):
             index_minus = int(np.ceil(index_start - i) % len(coloured_nodes))
             index_plus = int(np.floor(index_start + i) % len(coloured_nodes))
+            print("here2")
+            print(index, index_start)
             graph.add_edge(coloured_nodes[index], coloured_nodes[index_minus])
             graph.add_edge(coloured_nodes[index], coloured_nodes[index_plus])
     return graph
