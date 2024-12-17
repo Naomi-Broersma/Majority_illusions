@@ -98,6 +98,8 @@ def check_plurality_illusion_node(graph, node, colouring):
     plurality_winner_global = most_frequent(colouring)
     neighbours = list(graph.neighbors(node))
     colours_neighbours = []
+    print(colouring)
+    print(neighbours)
     for neighbour in neighbours:
         colours_neighbours.append(colouring[neighbour])
     if colours_neighbours:

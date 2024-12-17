@@ -41,7 +41,6 @@ def initialise_degree_of_regular_subgraph(num_nodes, k):
     else:
         k_blue = k/2 - 2
         k_red = (k - 2)/2
-    print("k_blue", k_blue)
     return k_blue, k_red
 
 
@@ -57,12 +56,12 @@ def add_initial_edges(graph, blue_nodes, red_nodes, degree):
         index_blue = (x + i) % len(blue_nodes)
         node_red = red_nodes[index_red]
         node_blue = blue_nodes[index_blue]
-        if (node_red, node_blue) in graph.edges():
+        print(node_red, node_blue)
+        if (node_red, node_blue) in graph.edges() or (node_blue, node_red) in graph.edges():
             x = 1
             index_blue = (x + i) % len(blue_nodes)
             node_blue = blue_nodes[index_blue]
         graph.add_edge(node_red, node_blue)
-    print(graph.edges())
     return graph
 
 
@@ -83,7 +82,6 @@ def order_by_number_of_edges(graph, blue_nodes):
 def add_extra_blue_edges(graph, blue_nodes, degree, degree_blue):
     # Determine how many edges each blue node already has and sort from least to most edges.
     nodes, edges_per_node = order_by_number_of_edges(graph, blue_nodes)
-    print(graph.edges())
     for index in range(0, len(nodes)):
         index_next = (index + 1) % len(nodes)
         # Check if the node has more than k blue open edges
@@ -93,7 +91,6 @@ def add_extra_blue_edges(graph, blue_nodes, degree, degree_blue):
             graph.add_edge(nodes[index], nodes[index_next])
             edges_per_node[index] = edges_per_node[index] + 1
             edges_per_node[index_next] = edges_per_node[index_next] + 1
-    print(graph.edges())
     return
 
 
@@ -104,21 +101,14 @@ def add_regular_subgraph(graph, coloured_nodes, colour_degree):
             index_start = (index + int(np.floor(len(coloured_nodes)/2))) % len(coloured_nodes)
         else:
             index_start = index + len(coloured_nodes) / 2
-        print("here")
-        print(index, index_start)
         if len(coloured_nodes) % 2 == 0 and colour_degree % 2 == 1:
             graph.add_edge(coloured_nodes[index], coloured_nodes[index_start])
-        # TODO how does this work when k_colour can be odd, but r needs to be an integer?
         r = colour_degree / 2
-        print(len(coloured_nodes))
         if len(coloured_nodes) % 2 == 1 and colour_degree % 2 == 1:
             r = (colour_degree - 1) / 2
-        print(colour_degree, r, int(r))
         for i in range(1, int(np.floor(r))+1):
             index_minus = int(np.ceil(index_start - i) % len(coloured_nodes))
             index_plus = int(np.floor(index_start + i) % len(coloured_nodes))
-            print("here2")
-            print(index, index_start)
             graph.add_edge(coloured_nodes[index], coloured_nodes[index_minus])
             graph.add_edge(coloured_nodes[index], coloured_nodes[index_plus])
     return graph
@@ -126,8 +116,8 @@ def add_regular_subgraph(graph, coloured_nodes, colour_degree):
 
 def add_unconnected_less_than_k_edges(graph, nodes, k):
     for node in nodes:
-        if node.neighbours() < k:
-            for other_node in nodes:  # TODO does this include blue_1/red_c?
+        if len(list(graph.neighbors(node))) < k:
+            for other_node in nodes:
                 if other_node != node and not (other_node, node) in graph.edges() and not (node, other_node) in graph.edges():
                     edge_counter = 0
                     for edge in graph.edges():
@@ -146,19 +136,25 @@ def create_regular_maj_maj_ill_graph(num_nodes, k):
     num_red_nodes = int(np.floor(num_nodes/2 + 1))
     num_blue_nodes = int(np.ceil(num_nodes/2 - 1))
     k_blue_nodes, k_red_nodes = initialise_degree_of_regular_subgraph(num_nodes, k)
-    print(k_red_nodes, k_blue_nodes)
     regular_graph = nx.Graph()
     regular_graph.add_nodes_from(list(range(1, num_nodes+1)))
-    red_nodes = list(random_combination(regular_graph.nodes(), num_red_nodes))
-    blue_nodes = list(set(regular_graph.nodes()) - set(red_nodes))
-    print(red_nodes, blue_nodes)
     colours = []
-    for node_index in range(1, num_nodes + 1):
-        if node_index in red_nodes:
-            colours.append("red")
-        else:
-            colours.append("blue")
+    red_nodes = list(range(1, num_red_nodes + 1))
+    blue_nodes = list(range(num_red_nodes + 1, num_nodes + 1))
+    print(red_nodes, blue_nodes)
+    for node_index in range(0, num_red_nodes):
+        colours.append("red")
+    for node_index in range(num_red_nodes, num_nodes):
+        colours.append("blue")
     print(colours)
+    # red_nodes = list(random_combination(regular_graph.nodes(), num_red_nodes))
+    # blue_nodes = list(set(regular_graph.nodes()) - set(red_nodes))
+    # colours = []
+    # for node_index in range(1, num_nodes + 1):
+    #     if node_index in red_nodes:
+    #         colours.append("red")
+    #     else:
+    #         colours.append("blue")
     regular_graph = add_initial_edges(regular_graph, blue_nodes, red_nodes, k)
     plot_graph(regular_graph, colours)
     add_extra_blue_edges(regular_graph, blue_nodes, k, k_blue_nodes)
@@ -177,24 +173,35 @@ def create_regular_maj_maj_ill_graph(num_nodes, k):
             k_blue_temp = k_blue_nodes - 1
             regular_graph = add_regular_subgraph(regular_graph, blue_nodes, k_blue_temp)
             plot_graph(regular_graph, colours)
-    ordered_blue_nodes = order_by_number_of_edges(regular_graph, blue_nodes)
-    blue_least_edges = ordered_blue_nodes[0]
-    red_without_unconnected_red = []
-    for red_node in red_nodes:
-        if not (blue_least_edges, red_node) in regular_graph.edges() and not (red_node, blue_least_edges) in regular_graph.edges():
-            red_without_unconnected_red = red_nodes.copy()
-            red_without_unconnected_red.remove(red_node)
-            regular_graph.add_edge(blue_least_edges, red_node)
-            break
-    blue_without_blue_least_edges = blue_nodes.copy()
-    blue_without_blue_least_edges.remove(blue_least_edges)
-    if k_blue_nodes > 0:
-        regular_graph = add_unconnected_less_than_k_edges(regular_graph, blue_without_blue_least_edges, k)
-        plot_graph(regular_graph, colours)
-    regular_graph = add_unconnected_less_than_k_edges(regular_graph, red_without_unconnected_red, k)
+        ordered_blue_nodes = order_by_number_of_edges(regular_graph, blue_nodes)
+        blue_least_edges = ordered_blue_nodes[0][0]
+        red_without_unconnected_red = []
+        for red_node in red_nodes:
+            if not (blue_least_edges, red_node) in regular_graph.edges() and not (red_node, blue_least_edges) in regular_graph.edges():
+                red_without_unconnected_red = red_nodes.copy()
+                red_without_unconnected_red.remove(red_node)
+                regular_graph.add_edge(blue_least_edges, red_node)
+                break
+        blue_without_blue_least_edges = blue_nodes.copy()
+        blue_without_blue_least_edges.remove(blue_least_edges)
+        if k_blue_nodes > 0:
+            regular_graph = add_unconnected_less_than_k_edges(regular_graph, blue_without_blue_least_edges, k)
+            plot_graph(regular_graph, colours)
+        regular_graph = add_unconnected_less_than_k_edges(regular_graph, red_without_unconnected_red, k)
     plot_graph(regular_graph, colours)
-    return
+    print(nx.is_k_regular(regular_graph, k))
+    return regular_graph, colours
+
+#
+# # The values of the number of nodes n and the degree d need to meet the requirements of prop. 7 & 8 of Venema-Los et al. (2023)
+# def create_values_n_d_according_to_requirements():
+#     nodes_list = []
+#     degree_list = []
+#     deg = 3  # Lowest possible degree.
+#     n = 2 * (3 * deg + 1) / (deg - 1)  # Lowest possible number of nodes for degree 3.
+#     return nodes_list, degree_list
 
 
 if __name__ == "__main__":
-    create_regular_maj_maj_ill_graph(10, 3)
+    # nodes, degree = create_values_n_d_according_to_requirements()
+    create_regular_maj_maj_ill_graph(16, 4)
