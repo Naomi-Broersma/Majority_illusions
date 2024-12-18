@@ -129,6 +129,22 @@ def add_unconnected_less_than_k_edges(graph, nodes, k):
     return graph
 
 
+def find_two_connected_red_nodes_in_subgraph(regular_graph, colours):
+    for node in list(nx.connected_components(regular_graph))[0]:
+        if colours[node - 1] == "red":
+            red_node = node
+            # Find a red node connected to red_node
+            for (node1, node2) in regular_graph.edges():
+                if node1 == red_node and colours[node2 - 1]:
+                    red_node2 = node2
+                    break
+                if node2 == red_node and colours[node1 - 1]:
+                    red_node2 = node1
+                    break
+            red_nodes_connected_to_1_1 = []
+    return red_node, red_node2
+
+
 # Algorithm 3 of Venema-Los et al. (2023)
 # Input: the number of nodes in the graph and the degree k of the k-regular graph.
 # Output: a k-regular graph that is under majority-majority illusion.
@@ -190,6 +206,13 @@ def create_regular_maj_maj_ill_graph(num_nodes, k):
         regular_graph = add_unconnected_less_than_k_edges(regular_graph, red_without_unconnected_red, k)
     plot_graph(regular_graph, colours)
     print(nx.is_k_regular(regular_graph, k))
+    if not nx.is_k_regular(regular_graph, k):
+        print("The construction of the graph went wrong, the graph is not k-regular.")
+    # Check if the graph is connected or exists of multiple subgraphs.
+    if len(list(nx.connected_components(regular_graph))) > 1:
+        print("Multiple subgraphs.")
+        red_node_1_1, red_node_1_2 = find_two_connected_red_nodes_in_subgraph(regular_graph, colours)
+
     return regular_graph, colours
 
 #
