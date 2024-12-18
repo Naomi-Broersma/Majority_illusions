@@ -31,16 +31,16 @@ def plot_graph(graph, colour_map):
 def initialise_degree_of_regular_subgraph(num_nodes, k):
     if num_nodes % 2 == 0:
         if k % 2 == 0:
-            k_blue = k/2 - 3
-            k_red = k/2 - 1
+            k_blue = k / 2 - 3
+            k_red = k / 2 - 1
         else:
-            k_blue = (k - 5)/2
-            k_red = (k - 1)/2
+            k_blue = (k - 5) / 2
+            k_red = (k - 1) / 2
         if k_blue < 0:
             k_blue = 0
     else:
-        k_blue = k/2 - 2
-        k_red = (k - 2)/2
+        k_blue = k / 2 - 2
+        k_red = (k - 2) / 2
     return k_blue, k_red
 
 
@@ -48,7 +48,7 @@ def initialise_degree_of_regular_subgraph(num_nodes, k):
 def add_initial_edges(graph, blue_nodes, red_nodes, degree):
     x = 0
     if degree % 2 == 0:
-        num_edges = int(np.floor(len(red_nodes)*(degree + 2)/2))
+        num_edges = int(np.floor(len(red_nodes) * (degree + 2) / 2))
     else:
         num_edges = int(np.floor(len(red_nodes) * (degree + 1) / 2))
     for i in range(0, num_edges):
@@ -56,7 +56,6 @@ def add_initial_edges(graph, blue_nodes, red_nodes, degree):
         index_blue = (x + i) % len(blue_nodes)
         node_red = red_nodes[index_red]
         node_blue = blue_nodes[index_blue]
-        print(node_red, node_blue)
         if (node_red, node_blue) in graph.edges() or (node_blue, node_red) in graph.edges():
             x = 1
             index_blue = (x + i) % len(blue_nodes)
@@ -98,7 +97,7 @@ def add_extra_blue_edges(graph, blue_nodes, degree, degree_blue):
 def add_regular_subgraph(graph, coloured_nodes, colour_degree):
     for index in range(0, len(coloured_nodes)):
         if len(coloured_nodes) % 2 == 0:
-            index_start = (index + int(np.floor(len(coloured_nodes)/2))) % len(coloured_nodes)
+            index_start = (index + int(np.floor(len(coloured_nodes) / 2))) % len(coloured_nodes)
         else:
             index_start = index + len(coloured_nodes) / 2
         if len(coloured_nodes) % 2 == 0 and colour_degree % 2 == 1:
@@ -106,7 +105,7 @@ def add_regular_subgraph(graph, coloured_nodes, colour_degree):
         r = colour_degree / 2
         if len(coloured_nodes) % 2 == 1 and colour_degree % 2 == 1:
             r = (colour_degree - 1) / 2
-        for i in range(1, int(np.floor(r))+1):
+        for i in range(1, int(np.floor(r)) + 1):
             index_minus = int(np.ceil(index_start - i) % len(coloured_nodes))
             index_plus = int(np.floor(index_start + i) % len(coloured_nodes))
             graph.add_edge(coloured_nodes[index], coloured_nodes[index_minus])
@@ -118,7 +117,8 @@ def add_unconnected_less_than_k_edges(graph, nodes, k):
     for node in nodes:
         if len(list(graph.neighbors(node))) < k:
             for other_node in nodes:
-                if other_node != node and not (other_node, node) in graph.edges() and not (node, other_node) in graph.edges():
+                if other_node != node and not (other_node, node) in graph.edges() and not (node,
+                                                                                           other_node) in graph.edges():
                     edge_counter = 0
                     for edge in graph.edges():
                         if edge[0] == other_node or edge[1] == other_node:
@@ -129,40 +129,45 @@ def add_unconnected_less_than_k_edges(graph, nodes, k):
     return graph
 
 
-def find_two_connected_red_nodes_in_subgraph(regular_graph, colours):
-    for node in list(nx.connected_components(regular_graph))[0]:
+# There will always be two connected red nodes in a subgraph.
+def find_two_connected_red_nodes_in_subgraph(regular_graph, subgraph, colours):
+    connected_red_nodes_found = False
+    for node in subgraph:
+        if connected_red_nodes_found:
+            break
         if colours[node - 1] == "red":
             red_node = node
             # Find a red node connected to red_node
             for (node1, node2) in regular_graph.edges():
-                if node1 == red_node and colours[node2 - 1]:
+                if connected_red_nodes_found:
+                    break
+                if node1 == red_node and colours[node2 - 1] == "red" and node2 in subgraph:
                     red_node2 = node2
-                    break
-                if node2 == red_node and colours[node1 - 1]:
+                    regular_graph.remove_edge(node1, node2)
+                    connected_red_nodes_found = True
+                if node2 == red_node and colours[node1 - 1] == "red" and node1 in subgraph:
                     red_node2 = node1
-                    break
-            red_nodes_connected_to_1_1 = []
-    return red_node, red_node2
+                    regular_graph.remove_edge(node1, node2)
+                    connected_red_nodes_found = True
+    return regular_graph, red_node, red_node2
 
 
 # Algorithm 3 of Venema-Los et al. (2023)
 # Input: the number of nodes in the graph and the degree k of the k-regular graph.
 # Output: a k-regular graph that is under majority-majority illusion.
 def create_regular_maj_maj_ill_graph(num_nodes, k):
-    num_red_nodes = int(np.floor(num_nodes/2 + 1))
-    num_blue_nodes = int(np.ceil(num_nodes/2 - 1))
+    num_red_nodes = int(np.floor(num_nodes / 2 + 1))
+    num_blue_nodes = int(np.ceil(num_nodes / 2 - 1))
     k_blue_nodes, k_red_nodes = initialise_degree_of_regular_subgraph(num_nodes, k)
     regular_graph = nx.Graph()
-    regular_graph.add_nodes_from(list(range(1, num_nodes+1)))
+    regular_graph.add_nodes_from(list(range(1, num_nodes + 1)))
     colours = []
     red_nodes = list(range(1, num_red_nodes + 1))
     blue_nodes = list(range(num_red_nodes + 1, num_nodes + 1))
-    print(red_nodes, blue_nodes)
     for node_index in range(0, num_red_nodes):
         colours.append("red")
     for node_index in range(num_red_nodes, num_nodes):
         colours.append("blue")
-    print(colours)
     # red_nodes = list(random_combination(regular_graph.nodes(), num_red_nodes))
     # blue_nodes = list(set(regular_graph.nodes()) - set(red_nodes))
     # colours = []
@@ -193,7 +198,8 @@ def create_regular_maj_maj_ill_graph(num_nodes, k):
         blue_least_edges = ordered_blue_nodes[0][0]
         red_without_unconnected_red = []
         for red_node in red_nodes:
-            if not (blue_least_edges, red_node) in regular_graph.edges() and not (red_node, blue_least_edges) in regular_graph.edges():
+            if not (blue_least_edges, red_node) in regular_graph.edges() and not (red_node,
+                                                                                  blue_least_edges) in regular_graph.edges():
                 red_without_unconnected_red = red_nodes.copy()
                 red_without_unconnected_red.remove(red_node)
                 regular_graph.add_edge(blue_least_edges, red_node)
@@ -205,15 +211,31 @@ def create_regular_maj_maj_ill_graph(num_nodes, k):
             plot_graph(regular_graph, colours)
         regular_graph = add_unconnected_less_than_k_edges(regular_graph, red_without_unconnected_red, k)
     plot_graph(regular_graph, colours)
-    print(nx.is_k_regular(regular_graph, k))
     if not nx.is_k_regular(regular_graph, k):
         print("The construction of the graph went wrong, the graph is not k-regular.")
     # Check if the graph is connected or exists of multiple subgraphs.
     if len(list(nx.connected_components(regular_graph))) > 1:
-        print("Multiple subgraphs.")
-        red_node_1_1, red_node_1_2 = find_two_connected_red_nodes_in_subgraph(regular_graph, colours)
-
+        print("There are multiple subgraphs.")
+        # Find two connected red nodes per subgraph and remove the edge between those nodes.
+        connected_red_nodes_per_subgraph = []
+        for subgraph in list(nx.connected_components(regular_graph)):
+            regular_graph, red_node, red_node2 = find_two_connected_red_nodes_in_subgraph(regular_graph, subgraph,
+                                                                                          colours)
+            connected_red_nodes_per_subgraph.append([red_node, red_node2])
+            print("connected red nodes per subgraph:", connected_red_nodes_per_subgraph)
+        # Connect node 2 of subgraph i to node 1 of subgraph i + 1  where i \in [0,
+        # len(connected_red_nodes_per_subgraph) - 1]
+        for index in range(len(connected_red_nodes_per_subgraph)):
+            regular_graph.add_edge(connected_red_nodes_per_subgraph[index][1],
+                                   connected_red_nodes_per_subgraph[
+                                       (index + 1) % len(connected_red_nodes_per_subgraph)][0])
+            print("Added edge:", connected_red_nodes_per_subgraph[index][1],
+                  connected_red_nodes_per_subgraph[(index + 1) % len(connected_red_nodes_per_subgraph)][0])
+        if nx.is_k_regular(regular_graph, k) and len(list(nx.connected_components(regular_graph))) == 1:
+            print("A k-regular graph has been found.")
+        plot_graph(regular_graph, colours)
     return regular_graph, colours
+
 
 #
 # # The values of the number of nodes n and the degree d need to meet the requirements of prop. 7 & 8 of Venema-Los et al. (2023)
@@ -227,4 +249,4 @@ def create_regular_maj_maj_ill_graph(num_nodes, k):
 
 if __name__ == "__main__":
     # nodes, degree = create_values_n_d_according_to_requirements()
-    create_regular_maj_maj_ill_graph(16, 4)
+    create_regular_maj_maj_ill_graph(14, 4)
