@@ -135,9 +135,9 @@ def example_weak_maj_4_colouring():
 
 
 if __name__ == "__main__":
-    # example_maj_ill_digraph()
+    example_maj_ill_digraph()
     # example_no_maj_weak_maj_illusion()
     # example_minimising_monochromatic_edges2()
     # incorrect_colouring_min_monochromatic_edges()
     # example_introduction_k_reg_and_high_degree()
-    example_weak_maj_4_colouring()
+    # example_weak_maj_4_colouring()

@@ -5,8 +5,8 @@ import random
 
 
 # Create a random directed graph using a specified number of nodes.
-def create_random_directed_graph(nodes):
-    graph = nx.random_k_out_graph(nodes, 3, alpha=0.5, self_loops=False)
+def create_random_directed_graph(nodes, seed_number):
+    graph = nx.random_k_out_graph(nodes, 4, alpha=0.5, self_loops=False, seed=seed_number)
     temp_graph = graph.copy()
     for node in graph.nodes():
         neighbours = list(graph.neighbors(node))
@@ -24,7 +24,6 @@ def create_random_directed_graph(nodes):
             temp_graph.remove_edges_from([(node, node)])
             neighbours.remove(node)
         graph = temp_graph.copy()
-        # TODO remove this?
         if not neighbours:  # Ensure every node has a neighbour
             temp_graph = graph.copy()
             random_node = random.randint(0, len(graph.nodes()))
@@ -98,8 +97,8 @@ def check_plurality_illusion_node(graph, node, colouring):
     plurality_winner_global = most_frequent(colouring)
     neighbours = list(graph.neighbors(node))
     colours_neighbours = []
-    print(colouring)
-    print(neighbours)
+    # print(colouring)
+    # print(neighbours)
     for neighbour in neighbours:
         colours_neighbours.append(colouring[neighbour])
     if colours_neighbours:
@@ -109,7 +108,6 @@ def check_plurality_illusion_node(graph, node, colouring):
         plurality_winner_neighbours = []
     # print(plurality_winner_neighbours)
     # print(plurality_winner_global)
-    # TODO double-check if this works for empty set of local winners.
     # If you require a strict plurality illusion, then there is no overlap between local and global plurality winners.
     plurality_illusion = True
     for winner in plurality_winner_neighbours:
@@ -284,8 +282,10 @@ def plurality_illusion_check_per_colouring(graph, graph_colourings, k):
 
 if __name__ == "__main__":
     check_plurality = True
+    seed_number = 0
     while check_plurality:
-        digraph = create_random_directed_graph(7)
+        seed_number = seed_number + 1
+        digraph = create_random_directed_graph(10, seed_number)
         colour_options = all_colour_options_graph(digraph)
         # print("Checking for quota illusions.")
         # quota_illusion_check_per_colouring(digraph, colour_options, 0.5, 4)

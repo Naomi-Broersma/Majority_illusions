@@ -162,14 +162,25 @@ def plot_graph(graph, colour_map):
     return
 
 
-if __name__ == "__main__":
-    weak_node_illusion = True
-    weak_global_illusion = False
-    # cycle = create_3_cycle()
-    # general_graph_check(cycle, weak_node_illusion, weak_global_illusion)
-
-    # Keeps checking generated graphs until one has been found without a majority-weak-majority illusion.
+# Keeps checking generated digraphs with 7 nodes until one has been found without a majority-weak-majority illusion.
+def check_random_graphs():
     graph_majority_illusion = True
     while graph_majority_illusion:
         digraph = create_random_directed_graph(7)
         graph_majority_illusion = general_graph_check(digraph, weak_node_illusion, weak_global_illusion)
+    return
+
+
+if __name__ == "__main__":
+    weak_node_illusion = True
+    weak_global_illusion = False
+    # A 3-cycle is an example of a digraph which has no majority-weak-majority illusion.
+    cycle = create_3_cycle()
+    general_graph_check(cycle, weak_node_illusion, weak_global_illusion)
+
+    # If check_random is set to True, then random digraphs are checked until one has been found without a
+    # majority-weak-majority illusion.
+    check_random = False
+    if check_random:
+        check_random_graphs()
+

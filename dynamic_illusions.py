@@ -176,8 +176,6 @@ def check_for_randomly_created_graph():
     return
 
 
-# TODO generate a graph with a majority-majority illusion, instead of a random one and then checking for
-#  majority-majority illusion.
 # Potential approaches:
 # - proposition 8 defines n and d for which it is possible to have maj-maj illusion for d-regular undirected graph.
 # - theorem 2: for at least one such graph there is a maj-maj illusion, but not necessarily all of them.
